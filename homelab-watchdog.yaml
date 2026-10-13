@@ -1,0 +1,124 @@
+# homelab-watchdog: an independent watcher on a Waveshare ESP32-P4-ETH (wired Ethernet / PoE, no WiFi).
+# Checks 10 core targets every 60 s, alerts Discord #network-admin-alerts straight from the board (3 strikes = DOWN,
+# then RECOVERED), and pushes to an Uptime Kuma push monitor so Kuma and the board watch each other.
+# Secrets live ONLY in secrets.yaml (gitignored): copy secrets.yaml.example and fill it in on your own machine.
+#
+# Board pins from ESPHome's device page for this board (devices.esphome.io/devices/waveshare-esp32-p4-eth):
+# IP101 PHY, MDC GPIO31, MDIO GPIO52, PHY power GPIO51, RMII clock in on GPIO50, phy_addr 1.
+
+substitutions:
+  discord_webhook: !secret discord_webhook
+  kuma_push_url: !secret kuma_push_url
+
+esphome:
+  name: homelab-watchdog
+  friendly_name: Homelab Watchdog
+  includes:
+    - watchdog.h
+
+esp32:
+  board: esp32-p4-evboard
+  variant: esp32p4
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+
+ethernet:
+  type: IP101
+  mdc_pin: GPIO31
+  mdio_pin: GPIO52
+  power_pin: GPIO51
+  clk:
+    mode: CLK_EXT_IN
+    pin: GPIO50
+  phy_addr: 1
+  on_connect:
+    - lambda: |-
+        wd::NET_UP = true;
+        wd::start("${discord_webhook}", "${kuma_push_url}");
+  on_disconnect:
+    - lambda: wd::NET_UP = false;
+
+# pulls in esp_http_client + the CA bundle that watchdog.h uses for the Discord webhook (HTTPS)
+http_request:
+  verify_ssl: true
+
+logger:
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+web_server:
+  port: 80
+  version: 3
+
+sensor:
+  - platform: template
+    name: "Targets down"
+    accuracy_decimals: 0
+    update_interval: 15s
+    lambda: return wd::DOWN_COUNT.load();
+  - platform: template
+    name: "Alerts waiting to send"
+    accuracy_decimals: 0
+    update_interval: 15s
+    lambda: return wd::QUEUED.load();
+  - platform: template
+    name: "Check cycles"
+    accuracy_decimals: 0
+    update_interval: 60s
+    lambda: return wd::CYCLES.load();
+  - platform: uptime
+    name: "Uptime"
+
+text_sensor:
+  - platform: ethernet_info
+    ip_address:
+      name: "IP address"
+    mac_address:
+      name: "MAC address"
+  - platform: template
+    name: "Uptime Kuma (Zima :3001)"
+    update_interval: 15s
+    lambda: return wd::status(0);
+  - platform: template
+    name: "ZimaBlade (SSH :22)"
+    update_interval: 15s
+    lambda: return wd::status(1);
+  - platform: template
+    name: "NPMplus (Zima :80)"
+    update_interval: 15s
+    lambda: return wd::status(2);
+  - platform: template
+    name: "C1-G4 Proxmox (:8006)"
+    update_interval: 15s
+    lambda: return wd::status(3);
+  - platform: template
+    name: "c1-pn2 Proxmox (:8006)"
+    update_interval: 15s
+    lambda: return wd::status(4);
+  - platform: template
+    name: "Hermes CT100 (Caddy :443)"
+    update_interval: 15s
+    lambda: return wd::status(5);
+  - platform: template
+    name: "Vaultwarden CT110 (:8000)"
+    update_interval: 15s
+    lambda: return wd::status(6);
+  - platform: template
+    name: "Flint router (:80)"
+    update_interval: 15s
+    lambda: return wd::status(7);
+  - platform: template
+    name: "AdGuard DNS (Flint :3053)"
+    update_interval: 15s
+    lambda: return wd::status(8);
+  - platform: template
+    name: "Internet (1.1.1.1 :443)"
+    update_interval: 15s
+    lambda: return wd::status(9);
+
+button:
+  - platform: restart
+    name: "Restart"
