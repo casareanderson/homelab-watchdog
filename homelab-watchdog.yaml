@@ -17,8 +17,11 @@ esphome:
     - watchdog.h
 
 esp32:
-  board: esp32-p4-evboard
+  # 10-13: NOT board esp32-p4-evboard — ESPHome treats that as a pre-v3 engineering sample, and the build boot-looped
+  # (CHIP_LP_WDT_RESET) on the real board, which is production silicon v3.2. variant alone = production rev3.
   variant: esp32p4
+  engineering_sample: false
+  cpu_frequency: 360MHZ     # ESPHome: 400MHz on P4 is experimental and may not boot
   flash_size: 16MB
   framework:
     type: esp-idf
