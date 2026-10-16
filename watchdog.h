@@ -45,7 +45,7 @@ static State STATE[N];
 static std::atomic<int> DOWN_COUNT{0};
 static std::atomic<int> QUEUED{0};
 static std::atomic<uint32_t> CYCLES{0};
-static std::string WEBHOOK, KUMA_PUSH;
+static std::string WEBHOOK, KUMA_PUSH, DEADMAN_URL, DEADMAN_TOKEN;
 static std::deque<std::string> QUEUE;
 static SemaphoreHandle_t QMUX = nullptr;
 static std::atomic<bool> NET_UP{false};
@@ -85,12 +85,14 @@ static bool dns_check(const char *host, uint16_t port, int timeout_ms) {
   ::close(s); return ok;
 }
 
-static int http_req(const std::string &url, const char *body) {
+static int http_req(const std::string &url, const char *body, const std::string &bearer = "") {
   if (url.empty()) return -1;
   esp_http_client_config_t c = {};
   c.url = url.c_str(); c.timeout_ms = 8000; c.crt_bundle_attach = esp_crt_bundle_attach;
   c.method = body ? HTTP_METHOD_POST : HTTP_METHOD_GET;
   esp_http_client_handle_t h = esp_http_client_init(&c); if (!h) return -1;
+  std::string auth = "Bearer " + bearer;
+  if (!bearer.empty()) esp_http_client_set_header(h, "Authorization", auth.c_str());
   if (body) { esp_http_client_set_header(h, "Content-Type", "application/json");
               esp_http_client_set_post_field(h, body, strlen(body)); }
   int code = (esp_http_client_perform(h) == ESP_OK) ? esp_http_client_get_status_code(h) : -1;
@@ -152,6 +154,10 @@ static void task(void *) {
         int code = http_req(u, nullptr);
         if (code != 200) ESP_LOGW(TAG, "kuma push failed (%d)", code);
       }
+      if (!DEADMAN_URL.empty()) {   // off-site dead-man switch: alerts #notifications if these stop
+        int code = http_req(DEADMAN_URL, "{}", DEADMAN_TOKEN);
+        if (code < 200 || code >= 300) ESP_LOGW(TAG, "dead-man ping failed (%d)", code);
+      }
       flush_queue();
     }
     int64_t spent_ms = (esp_timer_get_time() - start) / 1000;
@@ -160,9 +166,10 @@ static void task(void *) {
   }
 }
 
-static void start(const std::string &webhook, const std::string &kuma) {
+static void start(const std::string &webhook, const std::string &kuma,
+                  const std::string &deadman_url, const std::string &deadman_token) {
   if (QMUX) return;
-  WEBHOOK = webhook; KUMA_PUSH = kuma; QMUX = xSemaphoreCreateMutex();
+  WEBHOOK = webhook; KUMA_PUSH = kuma; DEADMAN_URL = deadman_url; DEADMAN_TOKEN = deadman_token; QMUX = xSemaphoreCreateMutex();
   xTaskCreate(task, "watchdog", 8192, nullptr, 5, nullptr);
 }
 

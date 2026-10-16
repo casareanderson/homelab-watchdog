@@ -9,6 +9,8 @@
 substitutions:
   discord_webhook: !secret discord_webhook
   kuma_push_url: !secret kuma_push_url
+  deadman_url: !secret deadman_url
+  deadman_token: !secret deadman_token
 
 esphome:
   name: homelab-watchdog
@@ -38,7 +40,7 @@ ethernet:
   on_connect:
     - lambda: |-
         wd::NET_UP = true;
-        wd::start("${discord_webhook}", "${kuma_push_url}");
+        wd::start("${discord_webhook}", "${kuma_push_url}", "${deadman_url}", "${deadman_token}");
   on_disconnect:
     - lambda: wd::NET_UP = false;
 
