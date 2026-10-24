@@ -24,15 +24,15 @@ struct Target { const char *name; const char *host; uint16_t port; Kind kind; };
 
 // Verified 2026-10-13 from the G4 (TCP connect / DNS answer).
 static const Target TARGETS[] = {
-  {"Uptime Kuma (Zima :3001)",   "192.168.8.149", 3001, TCP},
-  {"ZimaBlade (SSH :22)",         "192.168.8.149", 22,   TCP},
-  {"NPMplus (Zima :80)",          "192.168.8.149", 80,   TCP},
-  {"C1-G4 Proxmox (:8006)",       "192.168.8.20",  8006, TCP},
-  {"c1-pn2 Proxmox (:8006)",      "192.168.8.10",  8006, TCP},
-  {"Hermes CT100 (Caddy :443)",   "192.168.8.120", 443,  TCP},
-  {"Vaultwarden CT110 (:8000)",   "192.168.8.30",  8000, TCP},
-  {"Flint router (:80)",          "192.168.8.1",   80,   TCP},
-  {"AdGuard DNS (Flint :3053)",   "192.168.8.1",   3053, DNS},
+  {"Uptime Kuma (:3001)",   "192.0.2.10", 3001, TCP},
+  {"NAS (SSH :22)",         "192.0.2.10", 22,   TCP},
+  {"Reverse proxy (:80)",          "192.0.2.10", 80,   TCP},
+  {"Node 1 Proxmox (:8006)",       "192.0.2.20",  8006, TCP},
+  {"Node 2 Proxmox (:8006)",      "192.0.2.30",  8006, TCP},
+  {"Agents (Caddy :443)",   "192.0.2.40", 443,  TCP},
+  {"Password vault (:8000)",   "192.0.2.50",  8000, TCP},
+  {"Router (:80)",          "192.0.2.1",   80,   TCP},
+  {"DNS blocker (:3053)",   "192.0.2.1",   3053, DNS},
   {"Internet (1.1.1.1 :443)",     "1.1.1.1",       443,  TCP},
 };
 static const int N = sizeof(TARGETS) / sizeof(TARGETS[0]);

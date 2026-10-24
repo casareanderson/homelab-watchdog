@@ -9,15 +9,15 @@ It doesn't depend on Uptime Kuma, Hermes or any server: if the boxes it watches 
 
   | Target | Address |
   |---|---|
-  | Uptime Kuma | 192.168.8.149:3001 |
-  | ZimaBlade (SSH) | 192.168.8.149:22 |
-  | NPMplus | 192.168.8.149:80 |
-  | C1-G4 Proxmox | 192.168.8.20:8006 |
-  | c1-pn2 Proxmox | 192.168.8.10:8006 |
-  | Hermes CT100 (Caddy) | 192.168.8.120:443 |
-  | Vaultwarden CT110 | 192.168.8.30:8000 |
-  | Flint router | 192.168.8.1:80 |
-  | AdGuard DNS | 192.168.8.1:3053 (A query for cloudflare.com) |
+  | Uptime Kuma | 192.0.2.10:3001 |
+  | NAS (SSH) | 192.0.2.10:22 |
+  | NPMplus | 192.0.2.10:80 |
+  | Node 1 Proxmox | 192.0.2.20:8006 |
+  | Node 2 Proxmox | 192.0.2.30:8006 |
+  | Agents (Caddy) | 192.0.2.40:443 |
+  | Password vault | 192.0.2.50:8000 |
+  | Router | 192.0.2.1:80 |
+  | AdGuard DNS | 192.0.2.1:3053 (A query for cloudflare.com) |
   | Internet | 1.1.1.1:443 |
 
 - 3 failed checks in a row = a **🔴 DOWN** message in Discord; the first good check after that = **🟢 RECOVERED**
@@ -28,7 +28,7 @@ It doesn't depend on Uptime Kuma, Hermes or any server: if the boxes it watches 
 
 ## Before you flash (on your Mac)
 
-1. **Discord webhook:** in Discord, `#network-admin-alerts` → Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL.
+1. **Discord webhook:** in Discord, `#alerts` → Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL.
 2. **Kuma push monitor:** Uptime Kuma → Add New Monitor → type **Push**, name `homelab-watchdog`, heartbeat interval
    **120 s** → copy the Push URL **without** the `?status=up&msg=OK&ping=` part.
 3. `cp secrets.yaml.example secrets.yaml`, then put those two URLs and a long random OTA password into `secrets.yaml`.
@@ -44,10 +44,10 @@ esphome run homelab-watchdog.yaml    # pick the USB serial port when asked
 ```
 
 Plug in the Ethernet cable (PoE or USB power both work). In the logs you should see an IP from DHCP and
-`watchdog online: checking 10 targets` appear in `#network-admin-alerts` within about a minute.
+`watchdog online: checking 10 targets` appear in `#alerts` within about a minute.
 The first ESP-IDF build downloads a few GB of toolchain and takes a while.
 
-**Then:** add a **DHCP reservation** on the Flint for the board's MAC (shown in the logs and on the status page) so it
+**Then:** add a **DHCP reservation** on your router for the board's MAC (shown in the logs and on the status page) so it
 keeps one IP. Later updates go over the network: `esphome run homelab-watchdog.yaml --device <board-ip>`.
 
 ## If something's off

@@ -1,5 +1,5 @@
 # homelab-watchdog: an independent watcher on a Waveshare ESP32-P4-ETH (wired Ethernet / PoE, no WiFi).
-# Checks 10 core targets every 60 s, alerts Discord #network-admin-alerts straight from the board (3 strikes = DOWN,
+# Checks 10 core targets every 60 s, alerts Discord #alerts straight from the board (3 strikes = DOWN,
 # then RECOVERED), and pushes to an Uptime Kuma push monitor so Kuma and the board watch each other.
 # Secrets live ONLY in secrets.yaml (gitignored): copy secrets.yaml.example and fill it in on your own machine.
 #
@@ -87,39 +87,39 @@ text_sensor:
     mac_address:
       name: "MAC address"
   - platform: template
-    name: "Uptime Kuma (Zima :3001)"
+    name: "Uptime Kuma (:3001)"
     update_interval: 15s
     lambda: return wd::status(0);
   - platform: template
-    name: "ZimaBlade (SSH :22)"
+    name: "NAS (SSH :22)"
     update_interval: 15s
     lambda: return wd::status(1);
   - platform: template
-    name: "NPMplus (Zima :80)"
+    name: "Reverse proxy (:80)"
     update_interval: 15s
     lambda: return wd::status(2);
   - platform: template
-    name: "C1-G4 Proxmox (:8006)"
+    name: "Node 1 Proxmox (:8006)"
     update_interval: 15s
     lambda: return wd::status(3);
   - platform: template
-    name: "c1-pn2 Proxmox (:8006)"
+    name: "Node 2 Proxmox (:8006)"
     update_interval: 15s
     lambda: return wd::status(4);
   - platform: template
-    name: "Hermes CT100 (Caddy :443)"
+    name: "Agents (Caddy :443)"
     update_interval: 15s
     lambda: return wd::status(5);
   - platform: template
-    name: "Vaultwarden CT110 (:8000)"
+    name: "Password vault (:8000)"
     update_interval: 15s
     lambda: return wd::status(6);
   - platform: template
-    name: "Flint router (:80)"
+    name: "Router (:80)"
     update_interval: 15s
     lambda: return wd::status(7);
   - platform: template
-    name: "AdGuard DNS (Flint :3053)"
+    name: "DNS blocker (:3053)"
     update_interval: 15s
     lambda: return wd::status(8);
   - platform: template
